@@ -1,0 +1,62 @@
+# This file is the entry point to configure your own services.
+# Files in the packages/ subdirectory configure your dependencies.
+
+# Put parameters here that don't need to change on each machine where the app is deployed
+# https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
+parameters:
+    send_sms_api_key: "28E1EAB4-4753-EFC4-35F0-47C2B6F84E6F"
+    code_active_interval: "PT10M"
+    sms_request_interval: "PT10M"
+    attempt_login_count: "3"
+    parameters_contact_email: "grides192@gmail.com"
+    parameters_contact_phone: "+79781126466"
+    parameters_s3_host: ""
+    parameters_s3_key: ""
+    parameters_s3_secret: ""
+    parameters_s3_temp_saving: ""
+    mailer_from: "onikij4uk2015@yandex.ru"
+    mailer_password: "fnmqeoelnowzmjbv"
+    parameters_telegram_chat_id: "%env(PARAMETERS_TELEGRAM_CHAT_ID)%"
+services:
+    # default configuration for services in *this* file
+    _defaults:
+        autowire: true      # Automatically injects dependencies in your services.
+        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+        public: false
+
+    # makes classes in src/ available to be used as services
+    # this creates a service per class whose id is the fully-qualified class name
+    App\:
+        resource: '../src/*'
+        exclude: '../src/{DependencyInjection,Entity,Migrations,Tests,Kernel.php}'
+
+    Jefero\Bot\Common\Infrastructure\Persistence\S3\S3FileStorage:
+        public: true
+        arguments:
+            $host: '%parameters_s3_host%'
+            $key: '%parameters_s3_key%'
+            $secret: '%parameters_s3_secret%'
+            $tempSaving: '%parameters_s3_temp_saving%'
+
+    Jefero\Bot\Common\Infrastructure\Persistence\RedisRepository:
+        arguments:
+            $namespace: '%env(SELF_URL_DOMAIN)%'
+            $host: '%env(REDIS_HOST)%'
+            $port: '%env(REDIS_PORT)%'
+            $password: '%env(REDIS_PASSWORD)%'
+
+    Jefero\Bot\Main\UI\Http\Controller\TelegramCallbackController:
+        arguments:
+            $telegramChatId: '%env(PARAMETERS_TELEGRAM_CHAT_ID)%'
+
+    Jefero\Bot\Main\UI\Http\Controller\VKCallbackController:
+        arguments:
+            $telegramChatId: '%env(PARAMETERS_TELEGRAM_CHAT_ID)%'
+
+    Jefero\Bot\Main\Domain\VK\Service\VKClient:
+        arguments:
+            $accessToken: '65225b8bad96f4416229da7ff36b62bdedf4f42447cba8be45c64eca8d943b7147c71c3afcae89dbf304a'
+
+    Jefero\Bot\Main\Domain\Telegram\Service\Telegram:
+        arguments:
+            $apiKey: '5741445833:AAF497m-rICRrt1-V732qh_rSgN_7wBvLh0'

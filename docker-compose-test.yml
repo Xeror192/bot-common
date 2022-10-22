@@ -1,0 +1,13 @@
+version: '2'
+
+services:
+    php:
+        build:
+            context: .
+            args:
+                SYSTEM_USER: ${SYSTEM_USER}
+        volumes:
+            - .:/var/www/symfony
+        env_file:
+            - .env
+            - .env.testing

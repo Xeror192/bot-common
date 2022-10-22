@@ -1,0 +1,101 @@
+version: '3.2'
+services:
+  nginx:
+    image: library/nginx:1.19-alpine
+    container_name: guru-nginx
+    env_file: .env
+    command: sh /usr/local/etc/entrypoint.sh
+    volumes:
+      - .:/var/www
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d
+      - ./docker/nginx/entrypoint.sh:/usr/local/etc/entrypoint.sh
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
+    depends_on:
+      - phpfpm
+    restart: always
+    ports:
+      - 80:80
+      - 443:443
+    networks:
+      outside-network:
+        aliases:
+          - guru
+      backend-network:
+
+  phpfpm:
+    container_name: guru-phpfpm
+    image: php:8.0-fpm
+    env_file: .env
+    build:
+      context: .
+#    user: "${UID}:${GID}"
+    user: "33:33"
+    volumes:
+      - .:/var/www
+      - ./docker/php-fpm/php.ini:/usr/local/etc/php/conf.d/00-php.ini
+    working_dir: /var/www/
+    restart: unless-stopped
+    networks:
+      backend-network:
+  mysql:
+    image: library/mysql:5.7
+    container_name: diana-mysql
+    env_file: .env
+    environment:
+      MYSQL_USER: user
+      MYSQL_PASSWORD: pswd
+      MYSQL_ROOT_PASSWORD: pswd
+      MYSQL_DATABASE: guru_prod
+    volumes:
+      - mysql-data:/var/lib/mysql
+#    command: mysqld --default-authentication-plugin=mysql_native_password
+    command: ['mysqld', '--character-set-server=utf8', '--collation-server=utf8_unicode_ci']
+    ports:
+    - 3306:3306
+    networks:
+      backend-network:
+
+  redis:
+    image: library/redis:6.0-alpine
+    container_name: guru-redis
+    env_file: .env
+    volumes:
+    - redis-data:/data
+    restart: unless-stopped
+    networks:
+      backend-network:
+
+  minio:
+      image: minio/minio:RELEASE.2021-03-26T00-00-41Z
+      container_name: guru-minio
+      volumes:
+        - minio-data:/data
+      restart: unless-stopped
+      environment:
+        MINIO_ROOT_USER: minio
+        MINIO_ROOT_PASSWORD: minio123
+      networks:
+        - backend-network
+      expose:
+        - "9000"
+      ports:
+        - "9090:9000"
+      command: server /data
+  certbot:
+    image: certbot/certbot
+    container_name: guru-certbot
+    volumes:
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
+
+volumes:
+  redis-data:
+  mysql-data:
+  minio-data:
+
+networks:
+  backend-network:
+  outside-network:
+    external:
+      name: guru

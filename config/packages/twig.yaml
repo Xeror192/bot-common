@@ -1,0 +1,9 @@
+twig:
+    default_path: '%kernel.project_dir%/templates'
+    globals:
+        contact_email: "%parameters_contact_email%"
+        contact_phone: "%parameters_contact_phone%"
+
+when@test:
+    twig:
+        strict_variables: true

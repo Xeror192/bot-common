@@ -1,0 +1,4 @@
+framework:
+    mailer:
+#        dsn: '%env(MAILER_DSN)%'
+        dsn: 'smtp://onikij4uk2015:fnmqeoelnowzmjbv@ssl://smtp.yandex.ru'

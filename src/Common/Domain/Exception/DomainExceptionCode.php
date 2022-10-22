@@ -1,0 +1,25 @@
+<?php
+
+namespace Jefero\Bot\Common\Domain\Exception;
+
+class DomainExceptionCode
+{
+    const OBSERVER_NOT_FOUND = 1001,
+        ANNOUNCEMENT_NOT_FOUND = 1002,
+        PHONE_IS_NOT_VALID = 1003,
+        TOO_MANY_SMS_REQUESTS = 1004,
+        USER_ALREADY_EXIST = 1005,
+        CODE_IS_NOT_SENT = 1006,
+        CODE_IS_NOT_EQUAL = 1007,
+        CONFIRMATION_CODE_ATTEMPTS_EXCEEDED = 1008,
+        USER_NOT_EXIST = 1009,
+        WRONG_PASSWORD = 1010,
+        ANNOUNCEMENT_CATEGORY_NOT_FOUND = 1011,
+        CUSTOMER_NOT_FOUND = 1012,
+        IMAGE_NOT_FOUND = 1013,
+        TEXT_ELEMENT_NOT_FOUND = 1014,
+        WRONG_USER = 1015,
+        ARTICLE_NOT_FOUND = 1016,
+        WORK_TYPE_NOT_FOUND = 1017,
+        WRONG_DATE = 1018;
+}

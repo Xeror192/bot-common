@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<psalm
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="https://getpsalm.org/schema/config"
+        cacheDirectory=".psalm-cache"
+        xsi:schemaLocation="https://getpsalm.org/schema/config vendor/vimeo/psalm/config.xsd"
+>
+    <projectFiles>
+        <directory name="src" />
+        <ignoreFiles>
+            <directory name="bin" />
+            <directory name="config" />
+            <directory name="var" />
+            <directory name="vendor" />
+        </ignoreFiles>
+    </projectFiles>
+
+    <issueHandlers>
+        <!-- level 2 issues - slightly lazy code writing, but probably low false-negatives -->
+        <MissingPropertyType errorLevel="info" />
+        <MissingClosureParamType errorLevel="info" />
+        <MissingClosureReturnType errorLevel="info" />
+        <DocblockTypeContradiction errorLevel="info" />
+        <PropertyNotSetInConstructor errorLevel="info" />
+        <!-- Custom -->
+    </issueHandlers>
+</psalm>

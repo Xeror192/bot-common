@@ -1,0 +1,11 @@
+parameters:
+    tmpDir: %rootDir%/../../../var/phpstan
+    excludes_analyse:
+        - %rootDir%/../../../src/Migrations
+    universalObjectCratesClasses:
+        - Symfony\Component\Validator\Constraint
+
+    inferPrivatePropertyTypeFromConstructor: true
+
+    checkMissingIterableValueType: false
+    checkGenericClassInNonGenericObjectType: false
