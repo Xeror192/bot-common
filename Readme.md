@@ -1,2 +1,2 @@
 ==========================
-# Library for easy creating bot
+# Library for easy creating bot 
