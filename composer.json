@@ -2,6 +2,7 @@
     "name": "jefero/bot_common",
     "license": "proprietary",
     "minimum-stability": "stable",
+    "version": "1.0.0",
     "prefer-stable": true,
     "require": {
         "php": ">=8.0",
