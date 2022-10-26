@@ -96,6 +96,12 @@
     "conflict": {
         "symfony/symfony": "*"
     },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url":  "git@github.com:Xeror192/bot-common.git"
+        }
+    ],
     "extra": {
         "symfony": {
             "allow-contrib": false,
