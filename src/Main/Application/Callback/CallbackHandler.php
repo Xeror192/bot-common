@@ -4,6 +4,7 @@ namespace Jefero\Bot\Main\Application\Callback;
 
 use Jefero\Bot\Main\Domain\Common\Entity\Customer;
 use Jefero\Bot\Main\Domain\Common\Service\CustomerRepository;
+use Jefero\Bot\Main\Domain\Common\Model\Dialog;
 use Jefero\Bot\Main\Domain\Common\Service\RedisBagService;
 use Jefero\Bot\Main\Domain\Message\Model\AbstractDialogResponseModel;
 use Jefero\Bot\Main\Domain\Telegram\Service\Telegram;

@@ -4,6 +4,7 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    jefero_common_dir: '%kernel.project_dir%'
     send_sms_api_key: "28E1EAB4-4753-EFC4-35F0-47C2B6F84E6F"
     code_active_interval: "PT10M"
     sms_request_interval: "PT10M"
@@ -22,11 +23,10 @@ services:
     _defaults:
         autowire: true      # Automatically injects dependencies in your services.
         autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
-        public: false
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
-    App\:
+    Jefero\Bot\:
         resource: '../src/*'
         exclude: '../src/{DependencyInjection,Entity,Migrations,Tests,Kernel.php}'
 
@@ -44,14 +44,6 @@ services:
             $host: '%env(REDIS_HOST)%'
             $port: '%env(REDIS_PORT)%'
             $password: '%env(REDIS_PASSWORD)%'
-
-    Jefero\Bot\Main\UI\Http\Controller\TelegramCallbackController:
-        arguments:
-            $telegramChatId: '%env(PARAMETERS_TELEGRAM_CHAT_ID)%'
-
-    Jefero\Bot\Main\UI\Http\Controller\VKCallbackController:
-        arguments:
-            $telegramChatId: '%env(PARAMETERS_TELEGRAM_CHAT_ID)%'
 
     Jefero\Bot\Main\Domain\VK\Service\VKClient:
         arguments:

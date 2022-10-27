@@ -10,7 +10,7 @@ use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ObjectRepository;
 use Symfony\Component\Security\Core\Security;
 
-final class DoctrineRepository
+class DoctrineRepository
 {
     protected EntityManagerInterface $em;
 

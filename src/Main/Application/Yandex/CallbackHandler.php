@@ -38,8 +38,10 @@ class CallbackHandler
 
     private RedisRepository $redisRepository;
 
-    public static CallbackCommand $command;
+    public static CallbackCommand $command; 
+    
     public static MemoryAction $currentAction;
+    
     public static MemoryUser $currentUser;
 
     private string $type = 'yandex';
