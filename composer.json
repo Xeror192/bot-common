@@ -100,6 +100,11 @@
             "url":  "git@github.com:Xeror192/bot-common.git"
         }
     ],
+    "replace": {
+        "symfony/polyfill-ctype": "*",
+        "symfony/polyfill-iconv": "*",
+        "symfony/polyfill-php72": "*"
+    },
     "extra": {
         "symfony": {
             "allow-contrib": false,

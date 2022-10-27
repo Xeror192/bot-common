@@ -3,10 +3,9 @@ EXECFLAGS = -u www-data
 
 install:
 	chmod -R 777 entrypoint.sh
-	mkdir vendor var
 	chmod -R 777 vendor
 	chmod -R 777 var
-	docker network create diana
+	docker network create bot_common
 	cp -n .env.orig .env
 	cp -n docker-compose.yml.dev docker-compose.yml
 	make build
