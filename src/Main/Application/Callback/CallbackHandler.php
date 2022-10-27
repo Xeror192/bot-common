@@ -51,11 +51,7 @@ class CallbackHandler
         ]);
     }
 
-    /**
-     * @param CallbackCommandInterface $command
-     * @param string $type
-     */
-    public function handle(CallbackCommandInterface $command, string $type): void
+    public function handle(CallbackCommandInterface $command, string $type): AbstractDialogResponseModel
     {
         $this->type = $type;
         $this->command = $command;
@@ -73,25 +69,32 @@ class CallbackHandler
         $action = $this->getAction();
 
         if (!$action) {
-            $this->start();
-            return;
+            return $this->start();
         }
 
         /** @var AbstractDialogResponseModel $dialogResponse */
         $dialogResponse = $this->dialogs[$action["code"]]->{$action["action"]}();
 
-        if ($dialogResponse) {
+        if ($dialogResponse && $sender = $this->getSender()) {
             if ($dialogResponse->isMedia()) {
-                $this->getSender()->sendMediaMessage($dialogResponse->getResponse($command->getChatId()));
+                $sender->sendMediaMessage($dialogResponse->getResponse($command->getChatId()));
                 $dialogResponse->setImages([]);
             }
-            $this->getSender()->sendRawMessage($dialogResponse->getResponse($command->getChatId()));
+            $sender->sendRawMessage($dialogResponse->getResponse($command->getChatId()));
         }
+
+        return $dialogResponse;
     }
 
-    public function start(): void
+    public function start(): AbstractDialogResponseModel
     {
-        $this->getSender()->sendRawMessage($this->getMainDialog()->start()->getResponse($this->command->getChatId()));
+        $dialog = $this->getMainDialog()->start();
+
+        if ($sender = $this->getSender()) {
+            $sender->sendRawMessage($dialog->getResponse($this->command->getChatId()));
+        }
+
+        return $dialog;
     }
 
     public function getAttachments()
