@@ -1,6 +1,6 @@
 <?php
 
-namespace Jefero\Main\Bot\Application\Callback;
+namespace Jefero\Bot\Main\Application\Callback;
 
 interface CallbackCommandInterface
 {

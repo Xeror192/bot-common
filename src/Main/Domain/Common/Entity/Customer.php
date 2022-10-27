@@ -21,7 +21,7 @@ class Customer
     private UuidInterface $uuid;
 
     /**
-     * @ORM\Embedded(class="App\Common\Domain\ValueObject\Phone", columnPrefix=false)
+     * @ORM\Embedded(class="Jefero\Bot\Common\Domain\ValueObject\Phone", columnPrefix=false)
      */
     private Phone $phone;
 

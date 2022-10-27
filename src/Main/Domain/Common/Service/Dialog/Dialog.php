@@ -13,7 +13,7 @@ use Jefero\Bot\Main\Domain\VK\Service\VKClient;
 
 abstract class Dialog
 {
-    private ?CallbackHandler $callbackHandler;
+    protected ?CallbackHandler $callbackHandler;
 
     public function setCallbackHandler(CallbackHandler $callbackHandler): static
     {

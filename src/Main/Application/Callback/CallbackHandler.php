@@ -4,12 +4,12 @@ namespace Jefero\Bot\Main\Application\Callback;
 
 use Jefero\Bot\Main\Domain\Common\Entity\Customer;
 use Jefero\Bot\Main\Domain\Common\Service\CustomerRepository;
-use Jefero\Bot\Main\Domain\Common\Service\Dialog\MainDialog;
 use Jefero\Bot\Main\Domain\Common\Service\RedisBagService;
 use Jefero\Bot\Main\Domain\Message\Model\AbstractDialogResponseModel;
 use Jefero\Bot\Main\Domain\Telegram\Service\Telegram;
 use Jefero\Bot\Main\Domain\VK\Service\VKClient;
 use Jefero\Bot\Common\Infrastructure\Persistence\DoctrineRepository;
+use App\Bot\Domain\Common\Service\MainDialog;
 
 class CallbackHandler
 {
@@ -20,16 +20,17 @@ class CallbackHandler
     ];
 
     public CustomerRepository $telegramCustomerRepository;
-    private Telegram $telegram;
-    private VKClient $VKClient;
-    private CallbackCommandInterface $command;
-    private RedisBagService $redisBagService;
+    protected Telegram $telegram;
+    protected VKClient $VKClient;
+    protected CallbackCommandInterface $command;
+    protected RedisBagService $redisBagService;
     public DoctrineRepository $doctrineRepository;
 
     protected array $dialogs = [];
-    private string $type;
+    protected string $mainDialogCode;
+    protected string $type;
 
-    private ?AbstractDialogResponseModel $responseModel = null;
+    protected ?AbstractDialogResponseModel $responseModel = null;
 
     public function __construct(
         DoctrineRepository       $doctrineRepository,
@@ -44,8 +45,9 @@ class CallbackHandler
         $this->doctrineRepository = $doctrineRepository;
         $this->telegram = $telegram;
         $this->VKClient = $VKClient;
+        $this->mainDialogCode = $mainDialog::getCode();
         $this->dialogs = array_merge($this->dialogs, [
-            MainDialog::CODE => $mainDialog->setCallbackHandler($this)
+            $mainDialog::getCode() => $mainDialog->setCallbackHandler($this)
         ]);
     }
 
@@ -168,6 +170,6 @@ class CallbackHandler
 
     public function getMainDialog()
     {
-        return $this->dialogs[MainDialog::getCode()];
+        return $this->dialogs[$this->mainDialogCode];
     }
 }
