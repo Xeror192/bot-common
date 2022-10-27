@@ -10,7 +10,6 @@ use Jefero\Bot\Main\Domain\Message\Model\AbstractDialogResponseModel;
 use Jefero\Bot\Main\Domain\Telegram\Service\Telegram;
 use Jefero\Bot\Main\Domain\VK\Service\VKClient;
 use Jefero\Bot\Common\Infrastructure\Persistence\DoctrineRepository;
-use App\Bot\Domain\Common\Service\MainDialog;
 
 class CallbackHandler
 {
@@ -39,7 +38,7 @@ class CallbackHandler
         RedisBagService          $redisBagService,
         Telegram                 $telegram,
         VKClient                 $VKClient,
-        MainDialog               $mainDialog
+        Dialog               $mainDialog
     ) {
         $this->telegramCustomerRepository = $telegramCustomerRepository;
         $this->redisBagService = $redisBagService;
