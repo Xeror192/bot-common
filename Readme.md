@@ -4,8 +4,6 @@
 Библиотека для удобного создания ботов для множества платформ
 
 
-
-
 ## Installation
 
 Install bot common with composer
