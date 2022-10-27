@@ -2,6 +2,7 @@
 
 namespace Jefero\Bot\Main\Domain\Common\Service\Dialog;
 
+use Jefero\Bot\Main\Domain\Common\Entity\Customer;
 use Jefero\Bot\Main\Domain\Message\Model\AbstractDialogResponseModel;
 use Jefero\Bot\Main\Domain\Common\Model\Dialog;
 
