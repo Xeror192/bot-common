@@ -5,11 +5,14 @@ namespace Jefero\Bot\Main\Domain\Common\Model;
 use Jefero\Bot\Main\Application\Callback\CallbackCommandInterface;
 use Jefero\Bot\Main\Application\Callback\CallbackHandler;
 use Jefero\Bot\Main\Application\VK\NewMessageCommand;
+use Jefero\Bot\Main\Domain\Common\Entity\Customer;
 use Jefero\Bot\Main\Domain\Message\Model\AbstractDialogResponseModel;
 use Jefero\Bot\Main\Domain\Telegram\Model\DialogResponseModel as TelegramDialogResponseModel;
 use Jefero\Bot\Main\Domain\Telegram\Service\Telegram;
 use Jefero\Bot\Main\Domain\VK\Model\DialogResponseModel as VKDialogResponseModel;
 use Jefero\Bot\Main\Domain\VK\Service\VKClient;
+use Jefero\Bot\Main\Domain\Yandex\Model\DialogResponseModel as YandexDialogResponseModel;
+use Jefero\Bot\Main\Domain\Yandex\Service\Yandex;
 
 abstract class Dialog
 {
@@ -67,8 +70,26 @@ abstract class Dialog
             return $model;
         }
 
+        if ($this->callbackHandler->getType() == Yandex::CODE_TYPE) {
+            /** @var YandexDialogResponseModel $model */
+            $model = YandexDialogResponseModel::mock();
+            return $model;
+        }
+
         return TelegramDialogResponseModel::mock();
     }
 
     abstract public static function getCode(): string;
+    
+    public function setAnswer(RedisBagAction $answer): self
+    {
+        $this->callbackHandler->setAnswer($answer);
+        
+        return $this;
+    }
+    
+    public function getCustomer(): ?Customer
+    {
+        return $this->getCallback()->getCustomer($this->getCallback()->getMessage()->getChatId());
+    }
 }

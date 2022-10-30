@@ -218,6 +218,33 @@ class MemoryAction
     {
         return $this->observer == SystemObserver::UUID && $this->action == 'greeting';
     }
+//
+//    public function addAnswer($params = []): self
+//    {
+//        $memoryAction = new self();
+//        $memoryAction->type = self::TYPE_ANSWER;
+//
+//        $memoryAction->observer = $params['observer'];
+//        $memoryAction->action = $params['action'];
+//        $memoryAction->query = $params['answer'];
+//        $memoryAction->needAnswer = $params['needAnswer'];
+//        $memoryAction->history = $this->history;
+//        $this->history = [];
+//        $memoryAction->history[] = $this;
+//        uasort($memoryAction->history, function ($a, $b) {
+//            /** @var MemoryAction $a */
+//            /** @var MemoryAction $b */
+//            $firstDate = $a->lastDate->getTimestamp();
+//            $firstDate += $a->type == self::TYPE_ANSWER ? 1 : 0;
+//            $secondDate = $b->lastDate->getTimestamp();
+//            $secondDate += $b->type == self::TYPE_ANSWER ? 1 : 0;
+//            if ($firstDate == $secondDate) {
+//                return 0;
+//            }
+//            return ($firstDate > $secondDate) ? -1 : 1;
+//        });
+//        return $memoryAction;
+//    }
 
     public function addAnswer($params = []): void
     {

@@ -5,11 +5,14 @@ namespace Jefero\Bot\Main\Domain\Common\Service\Dialog;
 use Jefero\Bot\Main\Application\Callback\CallbackCommandInterface;
 use Jefero\Bot\Main\Application\Callback\CallbackHandler;
 use Jefero\Bot\Main\Application\VK\NewMessageCommand;
+use Jefero\Bot\Main\Application\Yandex\CallbackCommand;
 use Jefero\Bot\Main\Domain\Message\Model\AbstractDialogResponseModel;
 use Jefero\Bot\Main\Domain\Telegram\Model\DialogResponseModel as TelegramDialogResponseModel;
 use Jefero\Bot\Main\Domain\Telegram\Service\Telegram;
 use Jefero\Bot\Main\Domain\VK\Model\DialogResponseModel as VKDialogResponseModel;
+use Jefero\Bot\Main\Domain\Yandex\Model\DialogResponseModel as YandexDialogResponseModel;
 use Jefero\Bot\Main\Domain\VK\Service\VKClient;
+use Jefero\Bot\Main\Domain\Yandex\Service\Yandex;
 
 abstract class Dialog
 {
@@ -64,6 +67,12 @@ abstract class Dialog
             $model = VKDialogResponseModel::mock();
             $model->setPeerId($message->object->message->peer_id);
             $model->setGroupId($message->group_id);
+            return $model;
+        }
+
+        if ($this->callbackHandler->getType() == Yandex::CODE_TYPE) {
+            /** @var YandexDialogResponseModel $model */
+            $model = YandexDialogResponseModel::mock();
             return $model;
         }
 

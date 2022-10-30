@@ -1,24 +1,28 @@
 <?php
 
-namespace App\Main\Domain\Common\Model;
+namespace Jefero\Bot\Main\Domain\Common\Model;
 
 use Jefero\Bot\Main\Application\Yandex\CallbackCommand;
 use Jefero\Bot\Main\Application\Yandex\CallbackHandler;
+use Jefero\Bot\Main\Domain\Common\Service\Dialog\SystemDialog;
 use Jefero\Bot\Main\Domain\Yandex\Domain\Entity\RequestAction;
 use Jefero\Bot\Main\Domain\Yandex\Domain\Observer\Model\SystemObserver;
 use Jefero\Bot\Main\Domain\Yandex\Domain\RequestAction\MemoryAction;
 use Jefero\Bot\Main\Domain\Yandex\Model\DialogResponseModel;
+use Monolog\DateTimeImmutable;
 
 class RedisBagAction
 {
     const TYPE_ACTION = 'action',
         TYPE_ANSWER = 'answer';
 
-    public string $observer;
-
     public string $type;
+    
+    public string $code;
 
     public bool $needAnswer = false;
+    
+    public bool $greeting = false;
 
     public string $action;
 
@@ -40,7 +44,7 @@ class RedisBagAction
     public static function createFromMemory(array $object): self
     {
         $response = new self();
-        $response->observer = $object['observer'];
+        $response->code = $object['code'];
         $response->needAnswer = $object['needAnswer'];
         $response->query = $object['query'];
         $response->type = $object['type'];
@@ -54,38 +58,33 @@ class RedisBagAction
         return $response;
     }
 
-    public static function createFromResponse(DialogResponseModel $responseModel, CallbackCommand $command): self
-    {
-        return new self();
-    }
-
-    public static function createFromRequestAction(RequestAction $requestAction): self
+    public static function createNew(string $code, string $type, string $action, string $query, bool $needAnswer = false): self
     {
         $response = new self();
-        $response->observer = $requestAction->getObserverUuid();
-        $response->type = self::TYPE_ACTION;
-        $response->action = $requestAction->getArguments()['action'];
-        $response->query = CallbackHandler::$command->getMessage();
-
-        return $response;
-    }
-
-    public static function createNew(string $observer, string $type, string $action): self
-    {
-        $response = new self();
-        $response->observer = $observer;
+        $response->code = $code;
         $response->type = $type;
         $response->action = $action;
-        $response->query = CallbackHandler::$command->getMessage();
+        $response->query = $query;
+        $response->needAnswer = $needAnswer;
 
         return $response;
+    }
+
+    public static function creatAction(string $code, string $action, string $query, bool $needAnswer = false): self
+    {
+        return self::createNew($code, self::TYPE_ACTION, $action, $query, $needAnswer);
+    }
+
+    public static function creatAnswer(string $code, string $action, string $query, bool $needAnswer = false): self
+    {
+        return self::createNew($code, self::TYPE_ANSWER, $action, $query, $needAnswer);
     }
 
     public static function createWithHistory(array $object): self
     {
         $oldAction = self::createFromMemory($object);
         $response = new self();
-        $response->observer = SystemObserver::UUID;
+        $response->code = \Jefero\Bot\Main\Application\Callback\CallbackHandler::$mainCode;
         $response->action = 'greeting';
         $response->type = self::TYPE_ACTION;
         $response->query = CallbackHandler::$command->getMessage();
@@ -108,24 +107,25 @@ class RedisBagAction
         return $response;
     }
 
-    public static function createGreeting(): self
+    public static function createGreeting(string $query): self
     {
         $response = new self();
         $response->type = self::TYPE_ACTION;
-        $response->observer = SystemObserver::UUID;
-        $response->action = 'greeting';
-        $response->query = CallbackHandler::$command->getMessage();
+        $response->observer = \Jefero\Bot\Main\Application\Callback\CallbackHandler::$mainCode;
+        $response->action = 'start';
+        $response->query = $query;
 
         return $response;
     }
 
-    public static function createFromVoid(): self
+    public static function createFromVoid(string $query): self
     {
         $response = new self();
         $response->type = self::TYPE_ACTION;
-        $response->observer = SystemObserver::UUID;
-        $response->action = 'helpVoid';
-        $response->query = CallbackHandler::$command->getMessage();
+        $response->code = \Jefero\Bot\Main\Application\Callback\CallbackHandler::$mainCode;
+        $response->action = 'start';
+        $response->query = $query;
+        $response->greeting = true;
 
         return $response;
     }
@@ -133,7 +133,7 @@ class RedisBagAction
     public function toArray(): array
     {
         $response = [
-            'observer' => $this->observer,
+            'code' => $this->code,
             'needAnswer' => $this->needAnswer,
             'query' => $this->query,
             'type' => $this->type,
@@ -168,25 +168,6 @@ class RedisBagAction
         return $this->arguments;
     }
 
-    public static function addAction(RedisBagAction $redisBagAction, RedisBagAction $currentAction): self
-    {
-        $redisBagAction->type = self::TYPE_ACTION;
-        $redisBagAction->history = $currentAction->history;
-        $currentAction->history = [];
-        $redisBagAction->history[] = $currentAction;
-        uasort($redisBagAction->history, function ($a, $b) {
-            /** @var RedisBagAction $a */
-            /** @var RedisBagAction $b */
-            $firstDate = $a->lastDate->getTimestamp();
-            $secondDate = $b->lastDate->getTimestamp();
-            if ($firstDate == $secondDate) {
-                return 0;
-            }
-            return ($firstDate > $secondDate) ? -1 : 1;
-        });
-        return $redisBagAction;
-    }
-
     public function getPreviousAction(): ?RedisBagAction
     {
         if (empty($this->history)) {
@@ -215,27 +196,27 @@ class RedisBagAction
         return null;
     }
 
-    public function isGreeting(): bool
+    public function add(?RedisBagAction $action): void
     {
-        return $this->observer == SystemObserver::UUID && $this->action == 'greeting';
-    }
-
-    public function addAnswer($params = []): void
-    {
+        if (!$action) {
+            return;
+        }
+        
         $oldAction = new self();
         $oldAction->type = $this->type;
-        $oldAction->observer = $this->observer;
+        $oldAction->code = $this->code;
         $oldAction->action = $this->action;
         $oldAction->query = $this->query;
         $oldAction->needAnswer = $this->needAnswer;
         $oldAction->lastDate = $this->lastDate;
         $oldAction->arguments = $this->arguments;
 
-        $this->type = self::TYPE_ANSWER;
-        $this->observer = $params['observer'];
-        $this->action = $params['action'];
-        $this->query = $params['answer'];
-        $this->needAnswer = $params['needAnswer'];
+        $this->type = $action->type;
+        $this->code = $action->code;
+        $this->action = $action->action;
+        $this->query = $action->query;
+        $this->needAnswer = $action->needAnswer;
+        $this->lastDate = new \DateTimeImmutable();
         $this->history[] = $oldAction;
 
         uasort($this->history, function ($a, $b) {
@@ -250,5 +231,27 @@ class RedisBagAction
             }
             return ($firstDate > $secondDate) ? -1 : 1;
         });
+        $this->history = array_values($this->history);
+    }
+    
+    public function setParameter(string $name, $value): self
+    {
+        $this->arguments[$name] = $value;
+        
+        return $this;
+    }
+
+    public function getParameter(string $name)
+    {
+        if (isset($this->arguments[$name])) {
+            return $this->arguments[$name];
+        }
+
+        return null;
+    }
+    
+    public function isGreeting(): bool
+    {
+        return $this->greeting;
     }
 }

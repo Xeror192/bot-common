@@ -19,9 +19,4 @@ class MainDialog extends Dialog
     {
         return self::CODE;
     }
-
-    private function getCustomer(): ?Customer
-    {
-        return $this->getCallback()->getCustomer($this->getCallback()->getMessage()->getChatId());
-    }
 }

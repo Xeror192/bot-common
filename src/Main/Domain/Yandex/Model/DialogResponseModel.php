@@ -28,13 +28,21 @@ class DialogResponseModel extends AbstractDialogResponseModel
     {
         return [
             'response' => [
-                'text' => $this->text,
-                'tts' => $this->text,
+                'text' => $this->clearMessage($this->text),
+                'tts' => $this->clearMessage($this->text),
                 'buttons' => [],
                 'end_session' => $this->endSession
             ],
             'version' => $this->version
         ];
+    }
+    
+    private function clearMessage(string $message): string
+    {
+        $message = str_replace('\\', '', $message);
+        $message = str_replace('-', '', $message);
+        
+        return $message;
     }
 
     public function isEmpty(): bool
@@ -45,5 +53,10 @@ class DialogResponseModel extends AbstractDialogResponseModel
     public function setImages(array $images): AbstractDialogResponseModel
     {
         return $this;
+    }
+    
+    public function isNeedSendMessage(): bool
+    {
+        return false;
     }
 }

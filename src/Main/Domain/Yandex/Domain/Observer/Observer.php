@@ -45,7 +45,7 @@ abstract class Observer
             return $this->servant;
         }
 
-        $servant = "App\\Main\\Domain\\Yandex\\Domain\\Servant\\Model\\" . ucfirst(static::CODE) . "Servant";
+        $servant = "Jefero\\Bot\\Main\\Domain\\Yandex\\Domain\\Servant\\Model\\" . ucfirst(static::CODE) . "Servant";
 
         $this->servant = new $servant;
 

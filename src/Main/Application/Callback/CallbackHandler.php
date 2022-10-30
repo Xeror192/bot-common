@@ -3,20 +3,32 @@
 namespace Jefero\Bot\Main\Application\Callback;
 
 use Jefero\Bot\Main\Domain\Common\Entity\Customer;
+use Jefero\Bot\Main\Domain\Common\Model\RedisAnswer;
+use Jefero\Bot\Main\Domain\Common\Model\RedisBagAction;
 use Jefero\Bot\Main\Domain\Common\Service\CustomerRepository;
 use Jefero\Bot\Main\Domain\Common\Model\Dialog;
+use Jefero\Bot\Main\Domain\Common\Service\Dialog\SystemDialog;
 use Jefero\Bot\Main\Domain\Common\Service\RedisBagService;
 use Jefero\Bot\Main\Domain\Message\Model\AbstractDialogResponseModel;
 use Jefero\Bot\Main\Domain\Telegram\Service\Telegram;
 use Jefero\Bot\Main\Domain\VK\Service\VKClient;
 use Jefero\Bot\Common\Infrastructure\Persistence\DoctrineRepository;
+use Jefero\Bot\Main\Domain\Yandex\Domain\RequestAction\MemoryAction;
+use Jefero\Bot\Main\Domain\Yandex\Domain\RequestAction\MemoryUser;
+use Ramsey\Uuid\Uuid;
 
 class CallbackHandler
 {
     const HELLO_MESSAGES = [
-        "Начать",
+        "начать",
         "/start",
-        "Привет"
+        "привет"
+    ];
+
+    const SYSTEM_MESSAGES = [
+        "помощи",
+        "помощь",
+        "что ты умеешь"
     ];
 
     public CustomerRepository $telegramCustomerRepository;
@@ -24,30 +36,32 @@ class CallbackHandler
     protected VKClient $VKClient;
     protected CallbackCommandInterface $command;
     protected RedisBagService $redisBagService;
-    public DoctrineRepository $doctrineRepository;
 
     protected array $dialogs = [];
     protected string $mainDialogCode;
     protected string $type;
+    protected ?RedisBagAction $answer = null;
 
     protected ?AbstractDialogResponseModel $responseModel = null;
 
+    public static string $mainCode;
+
     public function __construct(
-        DoctrineRepository       $doctrineRepository,
-        CustomerRepository       $telegramCustomerRepository,
-        RedisBagService          $redisBagService,
-        Telegram                 $telegram,
-        VKClient                 $VKClient,
-        Dialog               $mainDialog
+        CustomerRepository $telegramCustomerRepository,
+        RedisBagService    $redisBagService,
+        Telegram           $telegram,
+        VKClient           $VKClient,
+        Dialog             $mainDialog
     ) {
         $this->telegramCustomerRepository = $telegramCustomerRepository;
         $this->redisBagService = $redisBagService;
-        $this->doctrineRepository = $doctrineRepository;
         $this->telegram = $telegram;
         $this->VKClient = $VKClient;
         $this->mainDialogCode = $mainDialog::getCode();
+        self::$mainCode = $mainDialog::getCode();
         $this->dialogs = array_merge($this->dialogs, [
-            $mainDialog::getCode() => $mainDialog->setCallbackHandler($this)
+            $mainDialog::getCode() => $mainDialog->setCallbackHandler($this),
+            SystemDialog::getCode() => (new SystemDialog())->setCallbackHandler($this)
         ]);
     }
 
@@ -56,31 +70,31 @@ class CallbackHandler
         $this->type = $type;
         $this->command = $command;
 
-        $this->redisBagService->setType($this->type)->setChatId($this->command->getChatId());
+        $this->redisBagService->setType($this->type)
+            ->setChatId($this->command->getChatId())
+            ->setQuery($this->getMessage()->getMessage());
 
-        if (in_array($command->getMessage(), self::HELLO_MESSAGES)) {
-            $this->clear();
+        if (!$this->getMessage()->getMessage() || $this->isHelloMessage($this->getMessage()->getMessage())) {
+            $this->bag()->clear();
+            return $this->handleAction($command);
         }
 
-        if (!empty($this->command->getPhoto())) {
-            $this->addAttachment($this->command->getPhoto());
-        }
-
-        $action = $this->getAction();
-
-        if (!$action) {
+        if ($this->bag()->getBag()->action()->isGreeting()) {
             return $this->start();
         }
 
-        /** @var AbstractDialogResponseModel $dialogResponse */
-        $dialogResponse = $this->dialogs[$action["code"]]->{$action["action"]}();
+        if ($this->isSystemMessage($this->getMessage()->getMessage())) {
+            $this->bag()->getBag()->action()->needAnswer = false;
+        }
 
-        if ($dialogResponse && $sender = $this->getSender()) {
-            if ($dialogResponse->isMedia()) {
-                $sender->sendMediaMessage($dialogResponse->getResponse($command->getChatId()));
-                $dialogResponse->setImages([]);
-            }
-            $sender->sendRawMessage($dialogResponse->getResponse($command->getChatId()));
+        if ($this->bag()->getBag()->action()->needAnswer) {
+            return $this->handleAction($command, true);
+        }
+
+        $dialogResponse = $this->handleAction($command, true);
+
+        if (!$this->bag()->getBag()->action()->needAnswer) {
+            $this->bag()->clear();
         }
 
         return $dialogResponse;
@@ -88,39 +102,17 @@ class CallbackHandler
 
     public function start(): AbstractDialogResponseModel
     {
-        $dialog = $this->getMainDialog()->start();
-
-        if ($sender = $this->getSender()) {
-            $sender->sendRawMessage($dialog->getResponse($this->command->getChatId()));
+        $dialogResponse = $this->getMainDialog()->start();
+        if ($dialogResponse->isNeedSendMessage() && $sender = $this->getSender()) {
+            $sender->sendRawMessage($dialogResponse->getResponse($this->command->getChatId()));
         }
 
-        return $dialog;
-    }
-
-    public function getAttachments()
-    {
-        return $this->redisBagService->getAttachments();
-    }
-
-    public function addAttachment($attachment): void
-    {
-        $this->redisBagService->addAttachment($attachment);
-    }
-
-    public function getAction()
-    {
-        return $this->redisBagService->getAction();
+        return $dialogResponse;
     }
 
     public function clear(): void
     {
-        $this->redisBagService->removeAttachments();
-        $this->redisBagService->removeAction();
-    }
-
-    public function setAction($action): void
-    {
-        $this->redisBagService->setAction($action);
+        $this->bag()->clear();
     }
 
     public function setParameter($name, $value): void
@@ -171,8 +163,77 @@ class CallbackHandler
         $this->responseModel = $model;
     }
 
-    public function getMainDialog()
+    public function getMainDialog(): Dialog
     {
         return $this->dialogs[$this->mainDialogCode];
+    }
+
+    public function bag(): RedisBagService
+    {
+        return $this->redisBagService;
+    }
+
+    public function setAnswer(RedisBagAction $answer): self
+    {
+        $this->answer = $answer;
+
+        return $this;
+    }
+
+    public function handleAction(
+        CallbackCommandInterface $command,
+        bool $withAction = false
+    ): AbstractDialogResponseModel
+    {
+        $action = $this->bag()->getBag()->action();
+
+        /** @var AbstractDialogResponseModel $dialogResponse */
+        $dialogResponse = $this->dialogs[$action->code]->{$action->action}();
+        if ($withAction) {
+            $newAction = RedisBagAction::creatAction($action->code, $action->action, $this->getMessage()->getMessage());
+            $this->bag()->getBag()->action()->add($newAction);
+        }
+        
+        if ($dialogResponse->isNextAction()) {
+            $newAction = RedisBagAction::creatAction(
+                $dialogResponse->getAction()->code, 
+                $dialogResponse->getAction()->action, 
+                $this->getMessage()->getMessage()
+            );
+            
+            $this->bag()->getBag()->action()->add($newAction);
+            $this->bag()->save();
+
+            $this->getResponseModel()->clearAction();
+            return $this->handleAction($command);
+        }
+
+        $this->bag()->getBag()->action()->add($this->answer);
+
+        if ($dialogResponse && $dialogResponse->isNeedSendMessage() && $sender = $this->getSender()) {
+            if ($dialogResponse->isMedia()) {
+                $sender->sendMediaMessage($dialogResponse->getResponse($command->getChatId()));
+                $dialogResponse->setImages([]);
+            }
+            $sender->sendRawMessage($dialogResponse->getResponse($command->getChatId()));
+        }
+
+        if (!$this->bag()->getBag()->action()->needAnswer) {
+            $this->bag()->clear();
+        }
+        
+        $this->bag()->save();
+
+        return $dialogResponse;
+    }
+
+    private function isHelloMessage(string $message): bool
+    {
+        return in_array(mb_strtolower($message), self::HELLO_MESSAGES);
+    }
+
+    private function isSystemMessage(string $message): bool
+    {
+        return in_array(mb_strtolower($message), self::SYSTEM_MESSAGES);
     }
 }

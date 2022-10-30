@@ -2,6 +2,7 @@
 
 namespace Jefero\Bot\Main\Domain\Common\Service;
 
+use Jefero\Bot\Main\Domain\Common\Model\RedisBag;
 use Jefero\Bot\Common\Infrastructure\Persistence\RedisRepository;
 
 class RedisBagService
@@ -11,6 +12,10 @@ class RedisBagService
     private ?string $type;
 
     private ?string $chatId;
+
+    private ?string $query;
+
+    private ?RedisBag $bag = null;
 
     public function __construct(RedisRepository $redisRepository)
     {
@@ -23,6 +28,12 @@ class RedisBagService
         return $this;
     }
 
+    public function setQuery(?string $query): RedisBagService
+    {
+        $this->query = $query;
+        return $this;
+    }
+
     public function setChatId(?string $chatId): RedisBagService
     {
         $this->chatId = $chatId;
@@ -32,6 +43,11 @@ class RedisBagService
     public function getActionCode(): string
     {
         return "{$this->type}.{$this->chatId}.action";
+    }
+
+    public function getBagCode(): string
+    {
+        return "{$this->type}.{$this->chatId}.bag";
     }
 
     public function getAttachmentCode(): string
@@ -109,5 +125,47 @@ class RedisBagService
         }
 
         return $action[$name] ?? null;
+    }
+    
+    public function getBag(): RedisBag
+    {
+        if ($this->bag) {
+            return $this->bag;
+        }
+
+        $bag = $this->redisRepository->getRedis()->get($this->getBagCode());
+        
+        if (!$bag) {
+            $this->bag = RedisBag::createFromVoid($this->chatId, $this->query);
+        }
+
+        $this->bag = $this->createBagFromMemory();
+        
+        return $this->bag;
+    }
+    
+    private function createBagFromMemory(): RedisBag
+    {
+        $bag = $this->redisRepository->getRedis()->get($this->getBagCode());
+        
+        if (!$bag) {
+            return RedisBag::createFromVoid($this->chatId, $this->query);
+        }
+        
+        $bag = json_decode($bag, true);
+        return RedisBag::createFromMemory($bag['action'], $bag['user']);
+    }
+    
+    public function clear(): self
+    {
+        $this->bag = RedisBag::createFromVoid($this->chatId, $this->query);
+        return $this->save();
+    }
+    
+    public function save(): self
+    {
+        $this->redisRepository->getRedis()->set($this->getBagCode(), json_encode($this->bag->toArray()));
+        
+        return $this;
     }
 }

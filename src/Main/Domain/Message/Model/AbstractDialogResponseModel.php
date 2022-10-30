@@ -2,6 +2,8 @@
 
 namespace Jefero\Bot\Main\Domain\Message\Model;
 
+use Jefero\Bot\Main\Domain\Common\Model\RedisBagAction;
+
 abstract class AbstractDialogResponseModel
 {
     public string $text = "";
@@ -9,6 +11,8 @@ abstract class AbstractDialogResponseModel
     public array $buttons = [];
 
     public array $images = [];
+    
+    public ?RedisBagAction $action = null;
 
     public static function mock(): self
     {
@@ -38,5 +42,31 @@ abstract class AbstractDialogResponseModel
     public function isMedia(): bool
     {
         return !empty($this->images);
+    }
+    
+    abstract public function isNeedSendMessage(): bool;
+    
+    public function isNextAction(): bool
+    {
+        return (bool) $this->action;
+    }
+    
+    public function getAction(): RedisBagAction
+    {
+        return $this->action;
+    }
+    
+    public function setAction(RedisBagAction $action): self
+    {
+        $this->action = $action;
+        
+        return $this;
+    }
+    
+    public function clearAction(): self
+    {
+        $this->action = null;
+        
+        return $this;
     }
 }

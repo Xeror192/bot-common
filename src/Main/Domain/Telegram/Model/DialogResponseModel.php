@@ -59,4 +59,9 @@ class DialogResponseModel extends AbstractDialogResponseModel
 
         return $this;
     }
+    
+    public function isNeedSendMessage(): bool
+    {
+        return true;
+    }
 }
