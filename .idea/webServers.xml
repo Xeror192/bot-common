@@ -3,7 +3,14 @@
   <component name="WebServers">
     <option name="servers">
       <webServer id="c3528506-8f10-4470-99aa-2b48345f08de" name="prod">
-        <fileTransfer rootFolder="/var/docker/backend" accessType="SFTP" host="92.255.107.144" port="22" sshConfigId="dc245b9a-cbee-4407-bc42-7c1f833489f5" sshConfig="root@92.255.107.144:22 key" keyPair="true">
+        <fileTransfer rootFolder="/var/docker/backend/vendor/jefero/bot_common" accessType="SFTP" host="92.255.107.144" port="22" sshConfigId="dc245b9a-cbee-4407-bc42-7c1f833489f5" sshConfig="root@92.255.107.144:22 key" keyPair="true">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+      <webServer id="e3c32680-9305-4fe1-8535-4def5b6c797d" name="prod_local">
+        <fileTransfer rootFolder="/var/docker/bot-common" accessType="SFTP" host="92.255.107.144" port="22" sshConfigId="dc245b9a-cbee-4407-bc42-7c1f833489f5" sshConfig="root@92.255.107.144:22 key" keyPair="true">
           <advancedOptions>
             <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
           </advancedOptions>

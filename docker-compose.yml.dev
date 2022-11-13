@@ -65,23 +65,6 @@ services:
     restart: unless-stopped
     networks:
       backend-network:
-
-  minio:
-      image: minio/minio:RELEASE.2021-03-26T00-00-41Z
-      container_name: guru-minio
-      volumes:
-        - minio-data:/data
-      restart: unless-stopped
-      environment:
-        MINIO_ROOT_USER: minio
-        MINIO_ROOT_PASSWORD: minio123
-      networks:
-        - backend-network
-      expose:
-        - "9000"
-      ports:
-        - "9090:9000"
-      command: server /data
   certbot:
     image: certbot/certbot
     container_name: guru-certbot
