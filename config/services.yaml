@@ -30,4 +30,4 @@ services:
 
     Jefero\Bot\Main\Domain\Telegram\Service\Telegram:
         arguments:
-            $apiKey: '%env(PARAMETERS_TELEGRAM_API_KEY))%'
+            $apiKey: '%env(PARAMETERS_TELEGRAM_API_KEY)%'
