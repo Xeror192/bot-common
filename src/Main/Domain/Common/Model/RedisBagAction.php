@@ -80,6 +80,11 @@ class RedisBagAction
         return self::createNew($code, self::TYPE_ANSWER, $action, $query, $needAnswer);
     }
 
+    public static function creatQuestion(string $code, string $action, string $query): self
+    {
+        return self::createNew($code, self::TYPE_ANSWER, $action, $query, true);
+    }
+
     public static function createWithHistory(array $object): self
     {
         $oldAction = self::createFromMemory($object);

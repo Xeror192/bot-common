@@ -40,8 +40,6 @@ class CallbackHandler
     protected array $dialogs = [];
     protected string $mainDialogCode;
     protected string $type;
-    protected ?RedisBagAction $answer = null;
-
     protected ?AbstractDialogResponseModel $responseModel = null;
 
     public static string $mainCode;
@@ -173,13 +171,6 @@ class CallbackHandler
         return $this->redisBagService;
     }
 
-    public function setAnswer(RedisBagAction $answer): self
-    {
-        $this->answer = $answer;
-
-        return $this;
-    }
-
     public function handleAction(
         CallbackCommandInterface $command,
         bool $withAction = false
@@ -208,8 +199,13 @@ class CallbackHandler
             return $this->handleAction($command);
         }
 
-        $this->bag()->getBag()->action()->add($this->answer);
-
+        if (!$dialogResponse->answer) {
+            $answer = RedisBagAction::creatAnswer($action->code, $action->action, $this->getMessage()->getMessage());
+            $dialogResponse->withAnswer($answer);
+        }
+        
+        $this->bag()->getBag()->action()->add($dialogResponse->answer);
+        $dialogResponse->answer = null;
         if ($dialogResponse && $dialogResponse->isNeedSendMessage() && $sender = $this->getSender()) {
             if ($dialogResponse->isMedia()) {
                 $sender->sendMediaMessage($dialogResponse->getResponse($command->getChatId()));

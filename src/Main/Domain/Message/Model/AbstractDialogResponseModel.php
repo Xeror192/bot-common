@@ -13,6 +13,8 @@ abstract class AbstractDialogResponseModel
     public array $images = [];
     
     public ?RedisBagAction $action = null;
+    
+    public ?RedisBagAction $answer = null;
 
     public static function mock(): self
     {
@@ -66,6 +68,13 @@ abstract class AbstractDialogResponseModel
     public function clearAction(): self
     {
         $this->action = null;
+        
+        return $this;
+    }
+    
+    public function withAnswer(?RedisBagAction $answer): self
+    {
+        $this->answer = $answer;
         
         return $this;
     }

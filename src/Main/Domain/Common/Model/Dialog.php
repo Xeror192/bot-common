@@ -81,15 +81,14 @@ abstract class Dialog
 
     abstract public static function getCode(): string;
     
-    public function setAnswer(RedisBagAction $answer): self
-    {
-        $this->callbackHandler->setAnswer($answer);
-        
-        return $this;
-    }
-    
     public function getCustomer(): ?Customer
     {
         return $this->getCallback()->getCustomer($this->getCallback()->getMessage()->getChatId());
+    }
+    
+    public function returnAction(string $code, string $action): AbstractDialogResponseModel
+    {
+        $action = RedisBagAction::creatAction($code, $action, $this->getText());
+        return $this->getResponseModel()->setAction($action);
     }
 }
