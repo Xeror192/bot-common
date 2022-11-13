@@ -14,7 +14,7 @@ Install bot common with composer
 
 ## Configuring
 
-```php
+```php 
 class Kernel extends BaseKernel
 {
     //Path to library
